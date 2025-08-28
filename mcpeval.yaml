@@ -1,0 +1,37 @@
+name: MCP Fetch Server Test Suite
+description: Comprehensive evaluation of the MCP fetch server capabilities
+mcp:
+  servers:
+    fetch:
+      transport: stdio
+      command: uvx
+      args:
+      - mcp-server-fetch
+      env:
+        UV_NO_PROGRESS: '1'
+    sample_server:
+      command: uv
+      args:
+      - run
+      - sample_server.py
+      env:
+        UV_NO_PROGRESS: '1'
+provider: anthropic
+model: claude-sonnet-4-20250514
+judge:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  min_score: 0.8
+reporting:
+  formats:
+  - json
+  - markdown
+  output_dir: ./test-reports
+agents:
+  definitions:
+  - name: default
+    instruction: You are a helpful assistant that can use MCP servers effectively.
+    server_names:
+    - fetch
+    provider: anthropic
+default_agent: default
