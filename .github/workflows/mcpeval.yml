@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Run MCP-Eval
         id: mcpeval
-        uses: ./.github/actions/mcp-eval/run
+        uses: StreetLamb/mcp-eval/.github/actions/mcp-eval/run@9ccf286
         with:
           python-version: '3.11'
           tests: tests/
@@ -30,7 +30,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Generate badges
         id: badges
-        uses: ./.github/actions/mcp-eval/badges
+        uses: StreetLamb/mcp-eval/.github/actions/mcp-eval/badges@9ccf286
         with:
           report-path: ${{ steps.mcpeval.outputs.results-json-path }}
           output-dir: mcpeval-reports/badges
