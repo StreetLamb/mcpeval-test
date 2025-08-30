@@ -10,6 +10,7 @@ mcp:
       env:
         UV_NO_PROGRESS: '1'
     sample_server:
+      transport: stdio
       command: uv
       args:
       - run
