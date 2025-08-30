@@ -7,10 +7,17 @@ on:
 
 jobs:
   tests:
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/mcp-eval/run
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run MCP-Eval
+        id: mcpeval
+        uses: StreetLamb/mcp-eval/.github/actions/mcp-eval/run@v0.1.0
         with:
           python-version: '3.11'
           tests: tests/
@@ -21,3 +28,11 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Generate badges
+        id: badges
+        uses: ./.github/actions/mcp-eval/badges
+        with:
+          report-path: ${{ steps.mcpeval.outputs.results-json-path }}
+          output-dir: mcpeval-reports/badges
+          upload-artifacts: 'true'
+          artifact-name: mcpeval-badges
