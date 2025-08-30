@@ -18,16 +18,16 @@ jobs:
       - name: Run MCP-Eval
         id: mcpeval
         uses: ./.github/actions/mcp-eval/run
-          with:
-            python-version: '3.11'
-            tests: tests/
-            run-args: '-v --max-concurrency 4'
-            pr-comment: 'true'
-            set-summary: 'true'
-            upload-artifacts: 'true'
-          env:
-            ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          python-version: '3.11'
+          tests: tests/
+          run-args: '-v --max-concurrency 4'
+          pr-comment: 'true'
+          set-summary: 'true'
+          upload-artifacts: 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Generate badges
         id: badges
         uses: ./.github/actions/mcp-eval/badges
