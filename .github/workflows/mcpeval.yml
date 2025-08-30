@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: lastmile-ai/mcp-eval/.github/actions/mcp-eval/run@v0.1.8
+      - uses: ./.github/actions/mcp-eval/run
         with:
           python-version: '3.11'
           tests: tests/
