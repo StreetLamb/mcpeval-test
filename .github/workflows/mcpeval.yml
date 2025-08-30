@@ -30,7 +30,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Generate badges
         id: badges
-        uses: StreetLamb/mcp-eval/.github/actions/mcp-eval/badges@v0.1.0
+        uses: ./.github/actions/mcp-eval/badges
         with:
           report-path: ${{ steps.mcpeval.outputs.results-json-path }}
           output-dir: mcpeval-reports/badges
