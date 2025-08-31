@@ -1,5 +1,8 @@
 # MCP-Eval Sample Tests
 
+![mcp-tests](badges/tests.svg)
+![mcp-cov](badges/coverage.svg)
+
 This directory contains example test cases demonstrating how to use the MCP-Eval framework to test MCP servers.
 
 ## Prerequisites

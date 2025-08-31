@@ -1,14 +1,13 @@
-name: MCP Eval Tests
+name: MCP Eval Main Branch
 on:
   push:
     branches: [ "main" ]
-  pull_request:
   workflow_dispatch:  # manual run button
 
 jobs:
   tests:
     permissions:
-      contents: read
+      contents: write  # Need write access to commit badges
       pull-requests: write
       issues: write
     runs-on: ubuntu-latest
@@ -22,7 +21,7 @@ jobs:
           python-version: '3.11'
           tests: tests/
           run-args: '-v --max-concurrency 4'
-          pr-comment: 'true'
+          pr-comment: 'false'  # No PR comments needed for main branch
           set-summary: 'true'
           upload-artifacts: 'true'
         env:
@@ -33,6 +32,25 @@ jobs:
         uses: ./.github/actions/mcp-eval/badges
         with:
           report-path: ${{ steps.mcpeval.outputs.results-json-path }}
-          output-dir: mcpeval-reports/badges
+          output-dir: badges  # Generate in badges/ directory at root
           upload-artifacts: 'true'
           artifact-name: mcpeval-badges
+      # Update README badges to point to the correct paths
+      - name: Update README badges
+        run: |
+          # Ensure badges exist in README
+          if ! grep -q "!\[mcp-tests\]" README.md; then
+            # Add badges at the top of README if they don't exist
+            sed -i '1a\\n![mcp-tests](badges/tests.svg)\n![mcp-cov](badges/coverage.svg)\n' README.md
+          fi
+      # Commit badge files
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add badges/*.svg README.md || true
+          # Only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(mcpeval): update badges"
+            git push
+          fi
