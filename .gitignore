@@ -2,3 +2,5 @@
 mcpeval.secrets.yaml
 test-reports/
 .venv/
+
+__pycache__
