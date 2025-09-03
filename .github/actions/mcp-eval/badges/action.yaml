@@ -46,7 +46,7 @@ runs:
         
         # Initialize git and configure sparse checkout
         git init
-        git remote add origin https://github.com/modelcontextprotocol/mcp-eval.git
+        git remote add origin https://github.com/lastmile-ai/mcp-eval.git
         git config core.sparseCheckout true
         
         # Configure sparse checkout to only get the script we need
