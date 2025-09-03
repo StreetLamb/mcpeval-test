@@ -9,7 +9,7 @@ def _cfg():
 async def basic_website_fetch(agent: TestAgent, session):
     response = await agent.generate_str("Please fetch the content from https://example.com and tell me what you find")
     await session.assert_that(Expect.tools.was_called("fetch", min_times=1))
-    # await session.assert_that(Expect.tools.called_with("fetch", {'url': 'https://example.com'}))
+    await session.assert_that(Expect.tools.called_with("fetch", {'url': 'https://example.com'}))
     # await session.assert_that(Expect.content.contains("example", case_sensitive=False), response=response)
     # await session.assert_that(Expect.judge.llm("Response indicates successful fetch and describes website content", min_score=0.7), response=response)
     # await session.assert_that(Expect.content.contains("example.com", case_sensitive=False), response=response)
@@ -19,10 +19,10 @@ async def basic_website_fetch(agent: TestAgent, session):
     # await session.assert_that(Expect.performance.response_time_under(10000.0))
     # await session.assert_that(Expect.judge.llm("The response should acknowledge that the assistant now has internet access and provide a clear summary of what was found on the example.com website, including its basic purpose as a domain example page.", min_score=0.7), response=response)
 
-# @task("fetch_with_length_limit")
-# async def fetch_with_length_limit(agent: TestAgent, session):
-#     response = await agent.generate_str("Fetch https://httpbin.org/html but only get the first 1000 characters")
-#     await session.assert_that(Expect.tools.was_called("fetch", min_times=1))
+@task("fetch_with_length_limit")
+async def fetch_with_length_limit(agent: TestAgent, session):
+    response = await agent.generate_str("Fetch https://httpbin.org/html but only get the first 1000 characters")
+    await session.assert_that(Expect.tools.was_called("fetch", min_times=1))
 #     await session.assert_that(Expect.tools.called_with("fetch", {'url': 'https://httpbin.org/html', 'max_length': 1000}))
 #     await session.assert_that(Expect.judge.llm("Response acknowledges length limitation and shows truncated content", min_score=0.7), response=response)
 #     await session.assert_that(Expect.content.contains("1000 characters", case_sensitive=False), response=response)

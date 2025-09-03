@@ -28,152 +28,57 @@ inputs:
     default: "mcpeval-badges"
     required: false
 outputs:
-  tests-badge-url:
-    description: "URL for the tests badge"
-    value: ${{ steps.generate.outputs.tests_badge_url }}
-  coverage-badge-url:
-    description: "URL for the coverage badge"
-    value: ${{ steps.generate.outputs.coverage_badge_url }}
   tests-badge-path:
-    description: "Path to the downloaded tests badge SVG (if output-dir is set)"
+    description: "Path to the generated tests badge SVG (if output-dir is set)"
     value: ${{ steps.generate.outputs.tests_badge_path }}
   coverage-badge-path:
-    description: "Path to the downloaded coverage badge SVG (if output-dir is set)"
+    description: "Path to the generated coverage badge SVG (if output-dir is set)"
     value: ${{ steps.generate.outputs.coverage_badge_path }}
-  tests-passed:
-    description: "Number of tests passed"
-    value: ${{ steps.generate.outputs.tests_passed }}
-  tests-total:
-    description: "Total number of tests"
-    value: ${{ steps.generate.outputs.tests_total }}
-  coverage-percentage:
-    description: "Tool coverage percentage"
-    value: ${{ steps.generate.outputs.coverage_percentage }}
 runs:
   using: "composite"
   steps:
-    - name: Generate badge URLs from report
-      id: generate
-      shell: python
+    - name: Fetch badge generation script
+      shell: bash
       run: |
-        import json
-        import os
-        import urllib.request
-        from pathlib import Path
+        # Create a temporary directory for the mcp-eval script
+        mkdir -p .mcp-eval-action
+        cd .mcp-eval-action
         
-        def get_color(percentage):
-            """Get color name for shields.io based on percentage"""
-            if percentage >= 90:
-                return "brightgreen"
-            elif percentage >= 75:
-                return "green"
-            elif percentage >= 50:
-                return "yellowgreen"
-            elif percentage >= 25:
-                return "orange"
-            else:
-                return "red"
+        # Initialize git and configure sparse checkout
+        git init
+        git remote add origin https://github.com/modelcontextprotocol/mcp-eval.git
+        git config core.sparseCheckout true
         
-        # Parse report
-        report_path = "${{ inputs.report-path }}"
+        # Configure sparse checkout to only get the script we need
+        echo "scripts/generate_badges.py" >> .git/info/sparse-checkout
         
-        try:
-            with open(report_path, 'r') as f:
-                report = json.load(f)
-            
-            # Calculate test results
-            summary = report.get("summary", {})
-            total_tests = (summary.get("total_decorator_tests", 0) + 
-                          summary.get("total_dataset_cases", 0))
-            passed_tests = (summary.get("passed_decorator_tests", 0) + 
-                           summary.get("passed_dataset_cases", 0))
-            pass_rate = (passed_tests / total_tests * 100.0) if total_tests > 0 else 0.0
-            
-            # Calculate tool coverage
-            available_tools = set()
-            used_tools = set()
-            
-            # Process decorator tests
-            for test in report.get("decorator_tests", []) or []:
-                metrics = test.get("metrics", {})
-                tool_coverage = metrics.get("tool_coverage", {})
-                for server_name, coverage in tool_coverage.items():
-                    if isinstance(coverage, dict):
-                        for tool in coverage.get("available_tools", []):
-                            available_tools.add(f"{server_name}:{tool}")
-                        for tool in coverage.get("used_tools", []):
-                            used_tools.add(f"{server_name}:{tool}")
-            
-            # Process dataset reports
-            for dataset in report.get("dataset_reports", []) or []:
-                for case in dataset.get("results", []) or []:
-                    metrics = case.get("metrics", {})
-                    tool_coverage = metrics.get("tool_coverage", {})
-                    for server_name, coverage in tool_coverage.items():
-                        if isinstance(coverage, dict):
-                            for tool in coverage.get("available_tools", []):
-                                available_tools.add(f"{server_name}:{tool}")
-                            for tool in coverage.get("used_tools", []):
-                                used_tools.add(f"{server_name}:{tool}")
-            
-            coverage_pct = (len(used_tools) / len(available_tools) * 100.0) if available_tools else 0.0
-            
-        except Exception as e:
-            print(f"Warning: Failed to parse report: {e}")
-            # Default values on error
-            passed_tests = 0
-            total_tests = 0
-            pass_rate = 0.0
-            coverage_pct = 0.0
+        # Fetch and checkout the specific file
+        git fetch --depth=1 origin main
+        git checkout origin/main
         
-        # Generate shield.io badge URLs
-        tests_label = "${{ inputs.tests-label }}".replace("-", "--").replace("_", "__")
-        coverage_label = "${{ inputs.coverage-label }}".replace("-", "--").replace("_", "__")
+        # Move back to the workspace root
+        cd ..
+    
+    - name: Generate badges
+      id: generate
+      shell: bash
+      run: |
+        set -euo pipefail
         
-        tests_message = f"{passed_tests}/{total_tests}"
-        tests_color = get_color(pass_rate)
-        tests_url = f"https://img.shields.io/badge/{tests_label}-{tests_message}-{tests_color}"
+        # Run the badge generation script with uv
+        uv run .mcp-eval-action/scripts/generate_badges.py \
+          --report "${{ inputs.report-path }}" \
+          --outdir "${{ inputs.output-dir }}" \
+          --label-tests "${{ inputs.tests-label }}" \
+          --label-cov "${{ inputs.coverage-label }}"
         
-        coverage_message = f"{int(round(coverage_pct))}%25"  # %25 is URL-encoded %
-        coverage_color = get_color(coverage_pct)
-        coverage_url = f"https://img.shields.io/badge/{coverage_label}-{coverage_message}-{coverage_color}"
-        
-        # Write outputs
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            f.write(f"tests_badge_url={tests_url}\n")
-            f.write(f"coverage_badge_url={coverage_url}\n")
-            f.write(f"tests_passed={passed_tests}\n")
-            f.write(f"tests_total={total_tests}\n")
-            f.write(f"coverage_percentage={int(round(coverage_pct))}\n")
-        
-        print(f"Generated badge URLs:")
-        print(f"  Tests: {tests_url}")
-        print(f"  Coverage: {coverage_url}")
-        
-        # Optionally download badges to files
-        output_dir = "${{ inputs.output-dir }}"
-        if output_dir:
-            output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-            
-            try:
-                # Download tests badge
-                tests_path = output_path / "tests.svg"
-                with urllib.request.urlopen(tests_url) as response:
-                    tests_path.write_bytes(response.read())
-                
-                # Download coverage badge  
-                coverage_path = output_path / "coverage.svg"
-                with urllib.request.urlopen(coverage_url) as response:
-                    coverage_path.write_bytes(response.read())
-                
-                with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                    f.write(f"tests_badge_path={tests_path.resolve()}\n")
-                    f.write(f"coverage_badge_path={coverage_path.resolve()}\n")
-                
-                print(f"Downloaded badges to {output_path}")
-            except Exception as e:
-                print(f"Warning: Failed to download badges: {e}")
+        # Set output paths if badges were generated
+        if [ -n "${{ inputs.output-dir }}" ]; then
+          if [ -f "${{ inputs.output-dir }}/tests.svg" ] && [ -f "${{ inputs.output-dir }}/coverage.svg" ]; then
+            echo "tests_badge_path=$(realpath ${{ inputs.output-dir }}/tests.svg)" >> $GITHUB_OUTPUT
+            echo "coverage_badge_path=$(realpath ${{ inputs.output-dir }}/coverage.svg)" >> $GITHUB_OUTPUT
+          fi
+        fi
 
     - name: Upload badge artifacts
       if: ${{ inputs.upload-artifacts == 'true' && inputs.output-dir != '' }}
