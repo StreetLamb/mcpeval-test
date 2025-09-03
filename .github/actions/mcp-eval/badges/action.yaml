@@ -37,17 +37,27 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Sparse checkout scripts/generate_badges.py
+    - name: Fetch badge generation script
       shell: bash
       run: |
-        # Enable sparse checkout
+        # Create a temporary directory for the mcp-eval script
+        mkdir -p .mcp-eval-action
+        cd .mcp-eval-action
+        
+        # Initialize git and configure sparse checkout
+        git init
+        git remote add origin https://github.com/modelcontextprotocol/mcp-eval.git
         git config core.sparseCheckout true
         
         # Configure sparse checkout to only get the script we need
-        echo "scripts/generate_badges.py" > .git/info/sparse-checkout
+        echo "scripts/generate_badges.py" >> .git/info/sparse-checkout
         
-        # Re-checkout to apply sparse checkout
-        git read-tree -m -u HEAD
+        # Fetch and checkout the specific file
+        git fetch --depth=1 origin main
+        git checkout origin/main
+        
+        # Move back to the workspace root
+        cd ..
     
     - name: Generate badges
       id: generate
@@ -56,7 +66,7 @@ runs:
         set -euo pipefail
         
         # Run the badge generation script with uv
-        uv run scripts/generate_badges.py \
+        uv run .mcp-eval-action/scripts/generate_badges.py \
           --report "${{ inputs.report-path }}" \
           --outdir "${{ inputs.output-dir }}" \
           --label-tests "${{ inputs.tests-label }}" \
