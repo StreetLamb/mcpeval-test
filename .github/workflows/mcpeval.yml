@@ -1,6 +1,9 @@
 name: MCP-Eval Reusable
 
 on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:  # manual run button
   workflow_call:
     inputs:
       python-version:
