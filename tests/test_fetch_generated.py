@@ -32,10 +32,10 @@ async def fetch_with_length_limit(agent: TestAgent, session):
 #     await session.assert_that(Expect.performance.response_time_under(8000.0))
 #     await session.assert_that(Expect.judge.llm("The response should correctly use the max_length parameter set to 1000, acknowledge the character limit constraint, and provide a summary of the fetched content from httpbin.org/html that respects the length limitation.", min_score=0.8), response=response)
 
-# @task("raw_html_fetch")
-# async def raw_html_fetch(agent: TestAgent, session):
-#     response = await agent.generate_str("I need the raw HTML source code of https://httpbin.org/html without any markdown conversion")
-#     await session.assert_that(Expect.tools.was_called("fetch", min_times=1))
+@task("raw_html_fetch")
+async def raw_html_fetch(agent: TestAgent, session):
+    response = await agent.generate_str("I need the raw HTML source code of https://httpbin.org/html without any markdown conversion")
+    await session.assert_that(Expect.tools.was_called("fetch", min_times=1))
 #     await session.assert_that(Expect.tools.called_with("fetch", {'url': 'https://httpbin.org/html', 'raw': True}))
 #     await session.assert_that(Expect.tools.output_matches(tool_name="fetch", expected_output='<html>', field_path=None, match_type="contains", case_sensitive=False, call_index=-1))
 #     await session.assert_that(Expect.content.contains("\u003c!DOCTYPE html\u003e", case_sensitive=False), response=response)
