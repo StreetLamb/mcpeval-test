@@ -32,23 +32,5 @@ jobs:
         with:
           report-path: ${{ steps.mcpeval.outputs.results-json-path }}
           output-dir: badges
-          upload-artifacts: 'false'  # No need to upload artifacts for main branch
-      # Update README badges to point to the correct paths
-      - name: Update README badges
-        run: |
-          # Ensure badges exist in README
-          if ! grep -q "!\[mcp-tests\]" README.md; then
-            # Add badges at the top of README if they don't exist
-            sed -i '1a\\n![mcp-tests](badges/tests.svg)\n![mcp-cov](badges/coverage.svg)\n' README.md
-          fi
-      # Commit badge files
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add badges/*.svg README.md || true
-          # Only commit if there are changes
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(mcpeval): update badges"
-            git push
-          fi
+          format: 'both'  # Generate both SVG and JSON endpoint files
+          upload-artifacts: 'true'  # Upload artifacts for GitHub Pages deployment

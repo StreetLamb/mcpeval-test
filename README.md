@@ -1,7 +1,7 @@
 # MCP-Eval Sample Tests
 
-![mcp-tests](badges/tests.svg)
-![mcp-cov](badges/coverage.svg)
+[![MCP Tests](https://img.shields.io/endpoint?url=https://streetlamb.github.io/mcpeval-test/mcp-tests.json&cacheSeconds=300)](https://github.com/StreetLamb/mcpeval-test/actions)
+[![MCP Tool Coverage](https://img.shields.io/endpoint?url=https://streetlamb.github.io/mcpeval-test/mcp-cov.json&cacheSeconds=300)](https://github.com/StreetLamb/mcpeval-test/actions)
 
 This directory contains example test cases demonstrating how to use the MCP-Eval framework to test MCP servers.
 

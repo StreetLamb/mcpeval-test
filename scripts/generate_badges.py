@@ -142,6 +142,18 @@ def write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def write_endpoint_json(path: Path, label: str, message: str, color: str) -> None:
+    """Write a Shields.io endpoint JSON file."""
+    data = {
+        "schemaVersion": 1,
+        "label": label,
+        "message": message,
+        "color": color
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
 def cli(
     report: str = typer.Option(
         ...,
@@ -151,7 +163,7 @@ def cli(
     outdir: str = typer.Option(
         "mcpeval-reports/badges",
         "--outdir",
-        help="Output directory for generated SVG badges",
+        help="Output directory for generated badges",
     ),
     label_tests: str = typer.Option(
         "mcp-tests", "--label-tests", help="Label for tests badge"
@@ -159,16 +171,31 @@ def cli(
     label_cov: str = typer.Option(
         "mcp-cov", "--label-cov", help="Label for coverage badge"
     ),
+    format: str = typer.Option(
+        "both",
+        "--format",
+        help="Output format: svg, endpoint, or both (default: both)",
+    ),
 ):
     report_path = Path(report)
     outdir_path = Path(outdir)
 
+    # Validate format option
+    if format not in ["svg", "endpoint", "both"]:
+        typer.echo(f"Invalid format: {format}. Must be 'svg', 'endpoint', or 'both'")
+        raise typer.Exit(1)
+    
     try:
         report_obj = load_report(report_path)
     except Exception:
         outdir_path.mkdir(parents=True, exist_ok=True)
-        write_text(outdir_path / "tests.svg", make_badge(label_tests, "0/0", "#9f9f9f"))
-        write_text(outdir_path / "coverage.svg", make_badge(label_cov, "0%", "#9f9f9f"))
+        # Generate fallback badges for errors
+        if format in ["svg", "both"]:
+            write_text(outdir_path / "tests.svg", make_badge(label_tests, "0/0", "#9f9f9f"))
+            write_text(outdir_path / "coverage.svg", make_badge(label_cov, "0%", "#9f9f9f"))
+        if format in ["endpoint", "both"]:
+            write_endpoint_json(outdir_path / "mcp-tests.json", label_tests, "0/0", "#9f9f9f")
+            write_endpoint_json(outdir_path / "mcp-cov.json", label_cov, "0%", "#9f9f9f")
         return
 
     passed, total, rate = compute_pass_fail(report_obj)
@@ -179,12 +206,23 @@ def cli(
     cov_value = f"{int(round(cov_pct))}%"
     cov_color = _color_for_percentage(cov_pct)
 
-    write_text(
-        outdir_path / "tests.svg", make_badge(label_tests, tests_value, tests_color)
-    )
-    write_text(
-        outdir_path / "coverage.svg", make_badge(label_cov, cov_value, cov_color)
-    )
+    # Generate SVG badges
+    if format in ["svg", "both"]:
+        write_text(
+            outdir_path / "tests.svg", make_badge(label_tests, tests_value, tests_color)
+        )
+        write_text(
+            outdir_path / "coverage.svg", make_badge(label_cov, cov_value, cov_color)
+        )
+    
+    # Generate Shields endpoint JSON files
+    if format in ["endpoint", "both"]:
+        write_endpoint_json(
+            outdir_path / "mcp-tests.json", label_tests, tests_value, tests_color
+        )
+        write_endpoint_json(
+            outdir_path / "mcp-cov.json", label_cov, cov_value, cov_color
+        )
 
 
 if __name__ == "__main__":
