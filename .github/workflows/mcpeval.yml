@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   call-mcpeval:
-    uses: ./.github/workflows/mcpeval-reusable.yml
+    uses: ./.github/workflows/mcpeval-reuseable.yml
     secrets: inherit
   consume:
     runs-on: ubuntu-latest
