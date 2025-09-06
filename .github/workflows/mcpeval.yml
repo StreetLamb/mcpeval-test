@@ -13,6 +13,8 @@ concurrency:
 jobs:
   call-mcpeval:
     uses: ./.github/workflows/mcpeval-reuseable.yml
+    with:
+      deploy-pages: true
     permissions:
       contents: read
       pages: write
